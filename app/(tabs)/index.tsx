@@ -1,32 +1,104 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MaterialIcons } from "@expo/vector-icons";
 import {
+  Alert,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { supabase } from "../../lib/supabase";
+
+type Task = {
+  id: string;
+  title: string;
+  completed: boolean;
+  created_at: string;
+};
 
 export default function App() {
   const [task, setTask] = useState("");
-  const [tasks, setTasks] = useState([
-    { id: "1", title: "Study React Native", completed: false },
-    { id: "2", title: "Finish Assignment", completed: false },
-  ]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const addTask = () => {
+  useEffect(() => {
+    loadTasks();
+  }, []);
+
+  const loadTasks = async () => {
+    setErrorMessage("");
+
+    const { data, error } = await supabase
+      .from("tasks")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.log(error);
+      setErrorMessage(error.message);
+      Alert.alert("Could not load tasks", error.message);
+      return;
+    }
+
+    setTasks(data ?? []);
+  };
+
+  const addTask = async () => {
     const trimmedTask = task.trim();
 
     if (!trimmedTask) {
       return;
     }
 
-    setTasks([
-      ...tasks,
-      { id: Date.now().toString(), title: task, completed: false },
-    ]);
+    setErrorMessage("");
+
+    const { error } = await supabase
+      .from("tasks")
+      .insert({ title: trimmedTask, completed: false });
+
+    if (error) {
+      console.log(error);
+      setErrorMessage(error.message);
+      Alert.alert("Could not add task", error.message);
+      return;
+    }
+
     setTask("");
+    await loadTasks();
+  };
+
+  const toggleTask = async (item: Task) => {
+    setErrorMessage("");
+
+    const { error } = await supabase
+      .from("tasks")
+      .update({ completed: !item.completed })
+      .eq("id", item.id);
+
+    if (error) {
+      console.log(error);
+      setErrorMessage(error.message);
+      Alert.alert("Could not update task", error.message);
+      return;
+    }
+
+    await loadTasks();
+  };
+
+  const deleteTask = async (id: string) => {
+    setErrorMessage("");
+
+    const { error } = await supabase.from("tasks").delete().eq("id", id);
+
+    if (error) {
+      console.log(error);
+      setErrorMessage(error.message);
+      Alert.alert("Could not delete task", error.message);
+      return;
+    }
+
+    await loadTasks();
   };
 
   return (
@@ -47,15 +119,24 @@ export default function App() {
         </TouchableOpacity>
       </View>
 
+      {errorMessage ? (
+        <Text style={styles.errorText}>{errorMessage}</Text>
+      ) : null}
+
       {tasks.map((task) => (
-        <View style={styles.taskRow} key={task.id}>
+        <TouchableOpacity
+          style={styles.taskRow}
+          key={task.id}
+          onPress={() => toggleTask(task)}
+          onLongPress={() => deleteTask(task.id)}
+        >
           <MaterialIcons
-            name="check-box-outline-blank"
+            name={task.completed ? "check-box" : "check-box-outline-blank"}
             size={20}
             color="#5A6472"
           />
           <Text style={styles.taskText}>{task.title}</Text>
-        </View>
+        </TouchableOpacity>
       ))}
     </View>
   );
@@ -114,5 +195,9 @@ const styles = StyleSheet.create({
   },
   taskText: {
     fontSize: 15,
+  },
+  errorText: {
+    color: "#B42318",
+    marginBottom: 12,
   },
 });
