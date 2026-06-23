@@ -1,13 +1,7 @@
 import { useEffect, useState } from "react";
-import { MaterialIcons } from "@expo/vector-icons";
-import {
-  Alert,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Alert, StyleSheet, Text, View } from "react-native";
+import TaskForm from "../../components/TaskForm";
+import TaskItem from "../../components/TaskItem";
 import { supabase } from "../../lib/supabase";
 
 type Task = {
@@ -107,36 +101,19 @@ export default function App() {
         <Text style={headerStyles.title}>TaskFlow</Text>
       </View>
 
-      <View style={styles.inputRow}>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter Task"
-          value={task}
-          onChangeText={setTask}
-        />
-        <TouchableOpacity style={styles.addButton} onPress={addTask}>
-          <MaterialIcons name="add" size={22} color="#fff" />
-        </TouchableOpacity>
-      </View>
+      <TaskForm task={task} setTask={setTask} onAdd={addTask} />
 
       {errorMessage ? (
         <Text style={styles.errorText}>{errorMessage}</Text>
       ) : null}
 
       {tasks.map((task) => (
-        <TouchableOpacity
-          style={styles.taskRow}
+        <TaskItem
           key={task.id}
-          onPress={() => toggleTask(task)}
-          onLongPress={() => deleteTask(task.id)}
-        >
-          <MaterialIcons
-            name={task.completed ? "check-box" : "check-box-outline-blank"}
-            size={20}
-            color="#5A6472"
-          />
-          <Text style={styles.taskText}>{task.title}</Text>
-        </TouchableOpacity>
+          item={task}
+          onToggle={toggleTask}
+          onDelete={deleteTask}
+        />
       ))}
     </View>
   );
@@ -165,36 +142,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     backgroundColor: "#fff",
-  },
-  inputRow: {
-    flexDirection: "row",
-    marginBottom: 20,
-  },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 10,
-    marginRight: 10,
-  },
-  addButton: {
-    backgroundColor: "#2E5BBA",
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  taskRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  taskText: {
-    fontSize: 15,
   },
   errorText: {
     color: "#B42318",
