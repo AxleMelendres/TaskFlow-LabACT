@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { MaterialIcons } from "@expo/vector-icons";
 import {
   StyleSheet,
@@ -8,6 +9,26 @@ import {
 } from "react-native";
 
 export default function App() {
+  const [task, setTask] = useState("");
+  const [tasks, setTasks] = useState([
+    { id: "1", title: "Study React Native", completed: false },
+    { id: "2", title: "Finish Assignment", completed: false },
+  ]);
+
+  const addTask = () => {
+    const trimmedTask = task.trim();
+
+    if (!trimmedTask) {
+      return;
+    }
+
+    setTasks([
+      ...tasks,
+      { id: Date.now().toString(), title: task, completed: false },
+    ]);
+    setTask("");
+  };
+
   return (
     <View style={styles.container}>
       <View style={headerStyles.header}>
@@ -15,28 +36,27 @@ export default function App() {
       </View>
 
       <View style={styles.inputRow}>
-        <TextInput style={styles.input} placeholder="Enter Task" />
-        <TouchableOpacity style={styles.addButton}>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter Task"
+          value={task}
+          onChangeText={setTask}
+        />
+        <TouchableOpacity style={styles.addButton} onPress={addTask}>
           <MaterialIcons name="add" size={22} color="#fff" />
         </TouchableOpacity>
       </View>
 
-      <View style={styles.taskRow}>
-        <MaterialIcons
-          name="check-box-outline-blank"
-          size={20}
-          color="#5A6472"
-        />
-        <Text style={styles.taskText}>Study React Native</Text>
-      </View>
-      <View style={styles.taskRow}>
-        <MaterialIcons
-          name="check-box-outline-blank"
-          size={20}
-          color="#5A6472"
-        />
-        <Text style={styles.taskText}>Finish Assignment</Text>
-      </View>
+      {tasks.map((task) => (
+        <View style={styles.taskRow} key={task.id}>
+          <MaterialIcons
+            name="check-box-outline-blank"
+            size={20}
+            color="#5A6472"
+          />
+          <Text style={styles.taskText}>{task.title}</Text>
+        </View>
+      ))}
     </View>
   );
 }
